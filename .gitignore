@@ -1,5 +1,3 @@
 depop_raw.html
-analyze_depop.py
-parse_depop_complex.py
-parse_depop.py
+check.py
 __pycache__/

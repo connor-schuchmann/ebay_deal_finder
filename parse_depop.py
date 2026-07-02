@@ -1,18 +1,27 @@
+import re
 from bs4 import BeautifulSoup
 
-# opens storage for parsed data
+# open the saved HTML and parse it
 with open("depop_raw.html", encoding="utf-8") as f:
     soup = BeautifulSoup(f, "html.parser")
 
-prices = soup.find_all("p", class_="styles_price__H8qdh")
+# find all listing cards — one entry per item
+listings = soup.find_all("div", class_=re.compile(r"productCardRoot"))
 
 prices_list = []
 
-for price in prices:
-    cost = price.get_text(strip=True)              # get dollar value
-    cleaned_cost = cost.replace("$", "")           # remove $
-    value = float(cleaned_cost)                    # turn to float
-    prices_list.append(value)                      # add to list
+for listing in listings:
+    # grab the actual (discount) price, NOT the strikethrough original
+    price = listing.find("p", class_=re.compile(r"styles_price__"))
 
+    if price is None:
+        continue   # this card has no price, skip it
 
+    cost = price.get_text(strip=True)      # e.g. "$22.09"
+    cleaned_cost = cost.replace("$", "")   # remove $
+    value = float(cleaned_cost)            # turn to float
+    prices_list.append(value)
 
+print("listings found:", len(listings))
+print("prices extracted:", len(prices_list))
+print(prices_list)
