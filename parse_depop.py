@@ -1,27 +1,43 @@
 import re
 from bs4 import BeautifulSoup
 
-# open the saved HTML and parse it
 with open("depop_raw.html", encoding="utf-8") as f:
     soup = BeautifulSoup(f, "html.parser")
 
-# find all listing cards — one entry per item
-listings = soup.find_all("div", class_=re.compile(r"productCardRoot"))
+listings = soup.find_all("div", class_=re.compile(r"productCardRoot"))  # get every <div> in product card
 
-prices_list = []
+data = []
 
 for listing in listings:
-    # grab the actual (discount) price, NOT the strikethrough original
-    price = listing.find("p", class_=re.compile(r"styles_price__"))
+    # brand
+    brand = listing.find("p", class_=re.compile(r"brandName"))
+    brand_text = brand.get_text(strip=True) if brand else "N/A"
+
+    # size
+    size = listing.find("p", class_=re.compile(r"sizeAttributeText"))
+    size_text = size.get_text(strip=True) if size else "N/A"
+
+    # price (check for discsount)
+    price = listing.find("p", attrs={"aria-description": "Discounted price"})
+    if price is None:
+        price = listing.find("p", attrs={"aria-description": "Price with fee"})
+    if price is None:
+        price = listing.find("p", class_=re.compile(r"styles_price__"))
 
     if price is None:
-        continue   # this card has no price, skip it
+        price_value = "N/A"
+    else:
+        cost = price.get_text(strip=True).replace("$", "")
+        price_value = float(cost)
 
-    cost = price.get_text(strip=True)      # e.g. "$22.09"
-    cleaned_cost = cost.replace("$", "")   # remove $
-    value = float(cleaned_cost)            # turn to float
-    prices_list.append(value)
+    # url
+    link = listing.find("a", class_=re.compile(r"unstyledLink"))
+    url = "https://www.depop.com" + link["href"] if link else "N/A"
 
-print("listings found:", len(listings))
-print("prices extracted:", len(prices_list))
-print(prices_list)
+    data.append({
+        "brand": brand_text,
+        "size": size_text,
+        "price": price_value,
+        "url": url,
+    })
+
