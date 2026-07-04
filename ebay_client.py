@@ -4,12 +4,13 @@ import os
 import requests
 from dotenv import load_dotenv
 
-# Load variables from .env into environment
-load_dotenv()
+# override=True: a stray shell-exported EBAY_ENV can otherwise shadow .env silently
+load_dotenv(override=True)
 
-CLIENT_ID = os.getenv("EBAY_CLIENT_ID")
-CLIENT_SECRET = os.getenv("EBAY_CLIENT_SECRET")
 EBAY_ENV = os.getenv("EBAY_ENV")
+CLIENT_ID = os.getenv(f"{EBAY_ENV}_CLIENT_ID")
+CLIENT_SECRET = os.getenv(f"{EBAY_ENV}_CLIENT_SECRET")
+
 
 TOKEN_URLS = {
     "SANDBOX": "https://api.sandbox.ebay.com/identity/v1/oauth2/token",
