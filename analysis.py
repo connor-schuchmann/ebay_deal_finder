@@ -1,4 +1,7 @@
+import sys
 import pandas as pd
+
+sys.stdout.reconfigure(encoding="utf-8")  # Windows console defaults cp1252, utf-8 covers all characters
 
 from ebay_client import get_access_token, search_listings
 from listings import extract_listings
@@ -11,17 +14,34 @@ data = extract_listings(results)
 
 # push data to panda + show stats
 df = pd.DataFrame(data)
-print("summary: ")
+df["condition"] = df["condition"].fillna("Unknown")  # replaces every NaN with "Unknown"
+
+print("summary (all conditions): ")
 print(df["total_price"].describe().round(2))
 
-# computations
-mean = df["total_price"].mean()
-std = df["total_price"].std()
-deal = mean - std
+print("\nsummary by condition: ")
+print(df.groupby("condition")["total_price"].describe().round(2))
 
-deals = df[df["total_price"] < deal].sort_values("total_price")
+# sort by condition
+deal_groups = []
+
+for condition, group in df.groupby("condition"): # loops for all conditions by amount group (dependent on condtion)
+    if len(group) < 3:
+        continue  # too few listings to be significant
+
+    mean = group["total_price"].mean()
+    std = group["total_price"].std()
+    threshold = mean - std
+
+    condition_deals = group[group["total_price"] < threshold].copy()  # guard against modifying original df
+    condition_deals["threshold"] = round(threshold, 2) # creates "threshold" in pd
+    deal_groups.append(condition_deals) # adds to deal_groups
+
+if deal_groups: # if ANY deals
+    deals = pd.concat(deal_groups).sort_values("total_price") # combines pd for all conditions to deals
+else: # if NO deals
+    deals = pd.DataFrame(columns=["title", "total_price", "condition", "threshold", "url"])
 
 # show deals
-print(f"\nThreshold: ${deal:.2f}")
-print(f"Found {len(deals)} deal(s):\n")
-print(deals[["title", "total_price", "condition", "url"]].to_string(index=False))
+print(f"\nFound {len(deals)} deal(s):\n")
+print(deals[["title", "total_price", "condition", "threshold", "url"]].to_string(index=False))
