@@ -44,7 +44,7 @@ def get_access_token():
     response.raise_for_status()                                     # guard for eBay error
     return response.json()["access_token"]                          # pull token -> JSON
 
-def search_listings(token, query):
+def search_listings(token, query, offset=0):
     search_url = SEARCH_URLS[EBAY_ENV] # env toggle
 
     headers = {
@@ -53,13 +53,35 @@ def search_listings(token, query):
     }
 
     params = {
-        "q": query,  # keyword
-        "limit": 50, # 0-200 per call
+        "q": query,       # keyword
+        "limit": 200,     # 0-200 per call, 200 is eBay's max
+        "offset": offset, # how many matching results to skip (for pagination)
     }
 
     response = requests.get(search_url, headers=headers, params=params) # send request
     response.raise_for_status()                                         # guard for eBay error
     return response.json()                                              # pull info -> JSON
+
+
+def search_all_listings(token, query, max_items=1000): # pagination
+    all_items = [] # all itemSummaries
+    offset = 0 # amount of items to shift by
+
+    while True: # page until break condition
+        results = search_listings(token, query, offset)
+        items = results.get("itemSummaries", [])
+
+        all_items.extend(items) # .extend() because we are adding a list
+        offset += len(items)    # shift by items -> 0-200, 201-400...
+
+        total = results.get("total", 0)
+        # condition 1 (not items): eBay's page returns empty
+        # condition 2 offset >= total): processed every item
+        # condition 3 (offset >= max_items): hit our chosen cap (defined as parameter)
+        if not items or offset >= total or offset >= max_items:
+            break
+
+    return all_items
 
 
 if __name__ == "__main__":

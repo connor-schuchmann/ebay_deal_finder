@@ -3,3 +3,4 @@ __pycache__/
 .env
 legacy/depop_raw.html
 legacy/check.py
+scratch.py

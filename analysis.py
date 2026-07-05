@@ -3,14 +3,16 @@ import pandas as pd
 
 sys.stdout.reconfigure(encoding="utf-8")  # Windows console defaults cp1252, utf-8 covers all characters
 
-from ebay_client import get_access_token, search_listings
+from ebay_client import get_access_token, search_all_listings
 from listings import extract_listings
 
 query = "airpods pro 2nd gen"  # what we are searching for
 
 token = get_access_token()
-results = search_listings(token, query)
-data = extract_listings(results)
+items = search_all_listings(token, query)
+data = extract_listings(items)
+
+print(f"fetched: {len(items)} items\n")
 
 # push data to panda + show stats
 df = pd.DataFrame(data)
