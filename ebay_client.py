@@ -63,21 +63,21 @@ def search_listings(token, query, offset=0):
 
 
 def search_all_listings(token, query, max_items=1000): # pagination
-    all_items = [] # all itemSummaries
+    all_items = []   # all itemSummaries
     seen_ids = set() # itemId of every listing 
-    offset = 0 # amount of items to shift by
+    offset = 0       # amount of items to shift by
 
     while True: # page until break condition
         results = search_listings(token, query, offset)
         items = results.get("itemSummaries", [])
 
-        for item in items: # filter out duplicates
+        for item in items:              # filter out duplicates
             item_id = item.get("itemId")
             if item_id not in seen_ids: # if first time "seening" listing
-                seen_ids.add(item_id) # add to list check
-                all_items.append(item) # append to master list
+                seen_ids.add(item_id)   # add to list check
+                all_items.append(item)  # append to master list
 
-        offset += len(items)    # shift by items -> 0-200, 201-400...
+        offset += len(items) # shift by items -> 0-200, 201-400...
 
         total = results.get("total", 0)
         # condition 1 (not items): eBay's page returns empty
