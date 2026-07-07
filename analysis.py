@@ -7,6 +7,8 @@ from ebay_client import get_access_token, search_all_listings
 from listings import extract_listings
 
 MAX_ITEMS = 1000                                                     # cap on how many listings to pull per search
+MAD_SCALE = 1.4826                                                   # scales MAD to be comparable to std under a normal distribution
+MAD_MULTIPLIER = 1                                                   # deal if price < median - this many scaled-MADs
 
 query = input("Search eBay for: ")                                   # search prompt
 
@@ -38,9 +40,9 @@ for condition, group in df.groupby("condition"):                     # loops for
     if len(group) < 3:
         continue                                                     # too few listings to be significant
 
-    mean = group["total_price"].mean()
-    std = group["total_price"].std()
-    threshold = mean - std
+    median = group["total_price"].median()
+    mad = (group["total_price"] - median).abs().median()
+    threshold = median - MAD_MULTIPLIER * MAD_SCALE * mad
 
     condition_deals = group[group["total_price"] < threshold].copy() # guard against modifying original df
     condition_deals["threshold"] = round(threshold, 2)               # creates "threshold" in pd
