@@ -7,14 +7,14 @@ from ebay_client import get_access_token, search_all_listings
 from listings import extract_listings
 
 MAX_ITEMS = 1000                                                     # cap on how many listings to pull per search
-MAD_SCALE = 1.4826                                                   # scales MAD to be comparable to std under a normal distribution
+MAD_SCALE = 1.4826                                                   # std conversion = 1.4826
 MAD_MULTIPLIER = 1                                                   # deal if price < median - this many scaled-MADs
 
 query = input("Search eBay for: ")                                   # search prompt
 
 token = get_access_token()
 items = search_all_listings(token, query, max_items=MAX_ITEMS)
-data = extract_listings(items)
+data = extract_listings(items, query)
 
 print(f"fetched: {len(items)} items\n")
 

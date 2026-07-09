@@ -1,20 +1,12 @@
-ACCESSORY_KEYWORDS = [                                                         # titles containing these are parts/accessories, not the actual product
-    "case", "cover", "tips", "tip", "skin", "sticker", "strap",
-    "empty box", "box only", "for parts", "replacement", "manual", "packaging",
-]
+from filters import is_accessory
 
 
-def is_accessory(title):
-    title = title.lower()
-    return any(keyword in title for keyword in ACCESSORY_KEYWORDS)
-
-
-def extract_listings(listings_raw):                                             # sorts paginated listings
+def extract_listings(listings_raw, query=""):                                   # sorts paginated listings
     listings = []
 
     for listing_raw in listings_raw:
         title = listing_raw.get("title", "")
-        if is_accessory(title):                                                 # skip accessories/parts so they don't skew the sample set
+        if is_accessory(title, query):                                          # skip accessories/parts, unless the user searched for one on purpose
             continue
 
         price = float(listing_raw["price"]["value"])

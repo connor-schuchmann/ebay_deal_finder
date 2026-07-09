@@ -71,16 +71,19 @@ Volcom Men's Gray Cotton Chino Shorts Flat Front Pockets Button Logo
 ## How it works
 
 Started as a DePop scraper, but scraping a marketplace's live site runs
-against its terms of service, so I rebuilt it on eBay's official Browse API
+against its ToS, so I rebuilt it on eBay's official Browse API
 (OAuth client-credentials flow, no scraping).
 
 - `ebay_client.py` gets access token and pulls listings, paging through
   results until it hits the total or a set cap (`MAX_ITEMS` in
   `analysis.py`, defaults to 1000).
-- `listings.py` cleans the raw results — it drops accessories and parts via an `ACCESSORY_KEYWORDS` blacklist so they don't skew the numbers, and folds shipping into a true total price.
+- `filters.py` drops accessories and parts via an `ACCESSORY_KEYWORDS` blacklist so they don't skew the numbers.
+- `listings.py` cleans the raw results using that filter, and folds shipping into a true total price.
 - `analysis.py` loads everything into pandas, groups by condition, and flags
   anything more than one standard deviation below its group's mean.
 
 ### Known limitation
 
-The accessory filter is a keyword blacklist, so it's only a heuristic. For example, it might flag AirPod hooks as a "deal" when the query is AirPods. The user can add to or remove from this list manually by adding "hook" to the blacklist as a fix. A more robust solution might use category types as a filter.
+The accessory filter is a keyword blacklist, so `ACCESSORY_KEYWORDS` only catches what's already in it, and maintaining it is manual. `find_accessory_keywords.py` surfaces candidate words, but it assumes normal-priced items dominate results, which breaks down on broad queries (e.g. "airpods"). It's also blind to the search query itself: query words are excluded from candidate results, so it can never flag the term you searched for. eBay's category field isn't a viable substitute for the keyword filter, since sellers list items under inconsistent categories.
+
+The program only works for searching a specific item, not an accessory directly, because eBay's search can't distinguish "a standalone case" from "an item that happens to mention its included case." Searching "airpods case" pulls in both cheap standalone cases and full-price AirPods that ship with a case, skewing the median/MAD used to detect deals.
